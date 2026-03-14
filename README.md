@@ -28,6 +28,24 @@ The script applies Linux system settings only. It may read MariaDB values for di
 
 GPL-v3. See `LICENSE`.
 
+## Contributing
+
+Run the local checks before committing:
+
+```bash
+./tests/run-shellcheck.sh
+bats tests/mariadb_storage_audit.bats
+```
+
+Install the versioned pre-commit hook:
+
+```bash
+git config core.hooksPath .githooks
+chmod +x .githooks/pre-commit tests/run-shellcheck.sh
+```
+
+The hook runs `shellcheck` and `bats` before each commit.
+
 ## Author
 
 Aurélien LEQUOY  

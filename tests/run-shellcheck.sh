@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if ! command -v shellcheck >/dev/null 2>&1; then
-  echo "shellcheck not installed"
-  exit 0
-fi
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
 
-shellcheck /srv/www/pma-mariadb-toolkit/mariadb_storage_audit.sh
+shellcheck mariadb_storage_audit.sh
