@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 setup() {
-  SCRIPT="/srv/www/pma-mariadb-toolkit/mariadb_storage_audit.sh"
+  SCRIPT="${BATS_TEST_DIRNAME}/../mariadb_storage_audit.sh"
 }
 
 @test "extract_selected_bracket_value returns selected token" {
