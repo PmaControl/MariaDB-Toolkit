@@ -67,7 +67,6 @@ STATUS_LABEL_WIDTH="54"
 GREEN=$'\033[1;32m'
 YELLOW=$'\033[1;33m'
 RED=$'\033[1;31m'
-BLUE=$'\033[1;34m'
 CYAN=$'\033[1;36m'
 BOLD=$'\033[1m'
 DIM=$'\033[2m'
@@ -141,10 +140,10 @@ detect_help_lang() {
   raw="${raw,,}"
 
   case "$raw" in
-    fr*|french*)
+    fr*)
       echo "fr"
       ;;
-    ru*|russian*)
+    ru*)
       echo "ru"
       ;;
     zh*|cn*|chinese*)
@@ -1937,7 +1936,7 @@ current_scheduler_value() {
   if is_virtualized_host; then
     echo "invité=$(get_scheduler_current)"
   else
-    echo "$(get_scheduler_current)"
+    get_scheduler_current
   fi
 }
 
@@ -1953,7 +1952,7 @@ scheduler_expectation_label() {
   if is_virtualized_host; then
     echo "none (VM)"
   else
-    echo "$(choose_scheduler)"
+    choose_scheduler
   fi
 }
 
@@ -2298,8 +2297,12 @@ EOF
 }
 
 apply_thp() {
-  [[ -w /sys/kernel/mm/transparent_hugepage/enabled ]] && echo never > /sys/kernel/mm/transparent_hugepage/enabled || true
-  [[ -w /sys/kernel/mm/transparent_hugepage/defrag ]] && echo never > /sys/kernel/mm/transparent_hugepage/defrag || true
+  if [[ -w /sys/kernel/mm/transparent_hugepage/enabled ]]; then
+    echo never > /sys/kernel/mm/transparent_hugepage/enabled || true
+  fi
+  if [[ -w /sys/kernel/mm/transparent_hugepage/defrag ]]; then
+    echo never > /sys/kernel/mm/transparent_hugepage/defrag || true
+  fi
 
   cat > "$THP_SERVICE" <<'EOF'
 [Unit]
@@ -2340,11 +2343,12 @@ EOF
 }
 
 apply_block_settings() {
-  local ra nr_file ra_file disk ra_sectors
+  local ra nr_file ra_file disk ra_sectors nr_value
   ra="$(suggest_readahead_kb)"
   nr_file="$(get_nr_requests_file)"
   ra_file="$(get_ra_file)"
   disk="$(get_disk_path)"
+  nr_value="$(suggest_nr_requests)"
 
   if [[ -w "$ra_file" ]]; then
     echo "$ra" > "$ra_file" || true
@@ -2354,7 +2358,7 @@ apply_block_settings() {
   fi
 
   if [[ -w "$nr_file" ]]; then
-    echo "$(suggest_nr_requests)" > "$nr_file" 2>/dev/null || warn "Impossible d'appliquer nr_requests=$(suggest_nr_requests) sur $(get_disk_name)"
+    echo "$nr_value" > "$nr_file" 2>/dev/null || warn "Impossible d'appliquer nr_requests=${nr_value} sur $(get_disk_name)"
   fi
 }
 
@@ -2463,9 +2467,9 @@ print_dry_run_commands() {
   line="$(fstab_line_for_target)"
 
   step "$(msg mode_dry_run)"
-  echo "$(msg none_applied)"
+  msg none_applied
   echo
-  echo "$(msg cmds_would_run)"
+  msg cmds_would_run
   echo
   echo "1) $(msg dryrun_sysctl)"
   echo "   $(msg write_file) ${SYSCTL_FILE}"
@@ -2571,8 +2575,8 @@ main() {
     print_dry_run_commands
   else
     step "$(msg mode_check)"
-    echo "$(msg none_applied)"
-    echo "$(msg apply_hint)"
+    msg none_applied
+    msg apply_hint
   fi
 }
 
