@@ -432,72 +432,6 @@ msg() {
   esac
 }
 
-menu_text() {
-  local key="$1"
-  case "$(lang):$key" in
-    fr:title) echo "MENU PRINCIPAL" ;;
-    en:title) echo "MAIN MENU" ;;
-    ru:title) echo "ГЛАВНОЕ МЕНЮ" ;;
-    zh:title) echo "主菜单" ;;
-    fr:hint) echo "Haut/Bas: action  Gauche/Droite: langue  Entrée: valider  q: quitter" ;;
-    en:hint) echo "Up/Down: action  Left/Right: language  Enter: confirm  q: quit" ;;
-    ru:hint) echo "Вверх/Вниз: действие  Влево/Вправо: язык  Enter: подтвердить  q: выход" ;;
-    zh:hint) echo "上/下：操作  左/右：语言  回车：确认  q：退出" ;;
-    fr:action_label) echo "Action" ;;
-    en:action_label) echo "Action" ;;
-    ru:action_label) echo "Действие" ;;
-    zh:action_label) echo "操作" ;;
-    fr:language_label) echo "Langue" ;;
-    en:language_label) echo "Language" ;;
-    ru:language_label) echo "Язык" ;;
-    zh:language_label) echo "语言" ;;
-    fr:opt_check) echo "Audit seulement" ;;
-    en:opt_check) echo "Check only" ;;
-    ru:opt_check) echo "Только проверка" ;;
-    zh:opt_check) echo "仅检查" ;;
-    fr:opt_dry_run) echo "Dry-run" ;;
-    en:opt_dry_run) echo "Dry-run" ;;
-    ru:opt_dry_run) echo "Dry-run" ;;
-    zh:opt_dry_run) echo "Dry-run" ;;
-    fr:opt_apply) echo "Appliquer" ;;
-    en:opt_apply) echo "Apply" ;;
-    ru:opt_apply) echo "Применить" ;;
-    zh:opt_apply) echo "应用" ;;
-    fr:opt_help) echo "Aide" ;;
-    en:opt_help) echo "Help" ;;
-    ru:opt_help) echo "Справка" ;;
-    zh:opt_help) echo "帮助" ;;
-    fr:opt_author) echo "Auteur" ;;
-    en:opt_author) echo "Author" ;;
-    ru:opt_author) echo "Автор" ;;
-    zh:opt_author) echo "作者" ;;
-    fr:opt_license) echo "Licence" ;;
-    en:opt_license) echo "License" ;;
-    ru:opt_license) echo "Лицензия" ;;
-    zh:opt_license) echo "许可证" ;;
-    fr:opt_version) echo "Version" ;;
-    en:opt_version) echo "Version" ;;
-    ru:opt_version) echo "Версия" ;;
-    zh:opt_version) echo "版本" ;;
-    fr:opt_quit) echo "Quitter" ;;
-    en:opt_quit) echo "Quit" ;;
-    ru:opt_quit) echo "Выход" ;;
-    zh:opt_quit) echo "退出" ;;
-    *) echo "$key" ;;
-  esac
-}
-
-menu_text_for_lang() {
-  local forced_lang="$1"
-  local key="$2"
-  local saved_lang="${HELP_LANG:-}"
-
-  HELP_LANG="$forced_lang"
-  menu_text "$key"
-  HELP_LANG="$saved_lang"
-}
-
-
 parse_args() {
   local arg
   local mode_set=0
@@ -541,6 +475,7 @@ parse_args() {
 }
 
 print_author() {
+  echo -e "${REV}${BOLD} AUTHOR ${NC}"
   cat <<EOF
 ${AUTHOR_NAME} <${AUTHOR_EMAIL}>
 ${AUTHOR_URL}
@@ -548,6 +483,7 @@ EOF
 }
 
 print_license() {
+  echo -e "${REV}${BOLD} LICENSE ${NC}"
   echo "${SCRIPT_LICENSE}"
 }
 
@@ -570,20 +506,16 @@ install_man_page() {
   info "Use: man mariadb_storage_audit"
 }
 
-wait_for_menu_return() {
-  local key
-  if [[ -t 0 && -t 1 ]]; then
-    echo
-    echo -e "${DIM}Press Enter or Space to return to the menu...${NC}"
-    while true; do
-      IFS= read -rsn1 key
-      case "$key" in
-        ''|' ')
-          break
-          ;;
-      esac
-    done
-  fi
+print_available_commands() {
+  echo -e "${REV}${BOLD} AVAILABLE COMMANDS ${NC}"
+  echo "  $0 --check [--lang fr|en|ru|zh]"
+  echo "  $0 --dry-run [--lang fr|en|ru|zh]"
+  echo "  $0 --apply [--lang fr|en|ru|zh]"
+  echo "  $0 --help [--lang fr|en|ru|zh]"
+  echo "  $0 --author"
+  echo "  $0 --license"
+  echo "  $0 --version"
+  echo "  $0 --install-man"
 }
 
 print_help_en() {
@@ -2573,118 +2505,75 @@ EOF
   echo "   $(msg reread_after_apply)"
 }
 
-MENU_LANG_CODES=(en fr ru zh)
-MENU_LANG_LABELS=(EN FR RU ZH)
-MENU_ITEM_KEYS=(opt_check opt_dry_run opt_apply opt_help opt_author opt_license opt_version opt_quit)
-MENU_ITEM_MODES=(--check --dry-run --apply --help --author --license --version __quit__)
-
-# External terminal UI library.
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tui_menu.sh"
-
-interactive_menu() {
-  run_interactive_menu
-}
-
 main() {
-  local interactive_session=0
-
   if [[ $# -eq 0 ]]; then
-    if [[ -t 0 && -t 1 ]]; then
-      interactive_session=1
-    else
-      print_help
-      exit 0
-    fi
+    print_available_commands
+    exit 0
   else
     parse_args "$@"
   fi
 
-  while true; do
-    if [[ "$interactive_session" == "1" ]]; then
-      interactive_menu
-    fi
+  if [[ "$MODE" == "--help" || "$MODE" == "-h" ]]; then
+    print_help
+    exit 0
+  fi
 
-    if [[ "$MODE" == "--help" || "$MODE" == "-h" ]]; then
-      print_help
-      [[ "$interactive_session" == "1" ]] && { wait_for_menu_return; continue; }
-      exit 0
-    fi
+  if [[ "$MODE" == "--author" || "$MODE" == "--authour" ]]; then
+    print_author
+    exit 0
+  fi
 
-    if [[ "$MODE" == "--author" || "$MODE" == "--authour" ]]; then
-      print_author
-      [[ "$interactive_session" == "1" ]] && { wait_for_menu_return; continue; }
-      exit 0
-    fi
+  if [[ "$MODE" == "--license" || "$MODE" == "--lisense" ]]; then
+    print_license
+    exit 0
+  fi
 
-    if [[ "$MODE" == "--license" || "$MODE" == "--lisense" ]]; then
-      print_license
-      [[ "$interactive_session" == "1" ]] && { wait_for_menu_return; continue; }
-      exit 0
-    fi
+  if [[ "$MODE" == "--version" ]]; then
+    print_version
+    exit 0
+  fi
 
-    if [[ "$MODE" == "--version" ]]; then
-      print_version
-      [[ "$interactive_session" == "1" ]] && { wait_for_menu_return; continue; }
-      exit 0
-    fi
-
-    if [[ "$MODE" == "--install-man" ]]; then
-      require_root
-      install_man_page
-      [[ "$interactive_session" == "1" ]] && { wait_for_menu_return; continue; }
-      exit 0
-    fi
-
-    if [[ "$MODE" != "--check" && "$MODE" != "--apply" && "$MODE" != "--dry-run" ]]; then
-      err "$(msg err_unknown_option "$MODE")"
-      echo
-      print_help
-      exit 1
-    fi
-
+  if [[ "$MODE" == "--install-man" ]]; then
     require_root
+    install_man_page
+    exit 0
+  fi
 
-    if [[ ! -b "$TARGET_DEVICE" ]]; then
-      err "$(msg err_missing_device "$TARGET_DEVICE")"
+  if [[ "$MODE" != "--check" && "$MODE" != "--apply" && "$MODE" != "--dry-run" ]]; then
+    err "$(msg err_unknown_option "$MODE")"
+    echo
+    print_help
+    exit 1
+  fi
+
+  require_root
+
+  if [[ ! -b "$TARGET_DEVICE" ]]; then
+    err "$(msg err_missing_device "$TARGET_DEVICE")"
+    exit 1
+  fi
+
+  print_checklist_before
+
+  if [[ "$MODE" == "--apply" ]]; then
+    step "$(msg application)"
+    apply_sysctl
+    apply_thp
+    apply_scheduler
+    apply_block_settings
+    apply_fstab_change
+    if ! verify_applied_changes; then
+      err "$(msg err_apply_not_conform)"
       exit 1
     fi
-
-    step "$(msg summary_target)"
-    kv_line "$(msg label_target_device_present)" "${TARGET_DEVICE}"
-    kv_line "UUID" "$(get_uuid "$TARGET_DEVICE")"
-    kv_line "$(msg filesystem)" "$(get_fstype_device "$TARGET_DEVICE")"
-    kv_line "$(msg mounted_target)" "${TARGET_MOUNT}"
-    kv_line "$(msg mount_options)" "$(expected_mount_opts)"
-    kv_line "$(msg proposed_line)" "$(fstab_line_for_target)"
-
-    show_pre_state
-    print_checklist_before
-
-    if [[ "$MODE" == "--apply" ]]; then
-      step "$(msg application)"
-      apply_sysctl
-      apply_thp
-      apply_scheduler
-      apply_block_settings
-      apply_fstab_change
-      if ! verify_applied_changes; then
-        err "$(msg err_apply_not_conform)"
-        [[ "$interactive_session" == "1" ]] && { wait_for_menu_return; continue; }
-        exit 1
-      fi
-      show_post_state
-      print_checklist_after
-    elif [[ "$MODE" == "--dry-run" ]]; then
-      print_dry_run_commands
-    else
-      step "$(msg mode_check)"
-      echo "$(msg none_applied)"
-      echo "$(msg apply_hint)"
-    fi
-
-    [[ "$interactive_session" == "1" ]] && { wait_for_menu_return; continue; }
-    break
-  done
+    print_checklist_after
+  elif [[ "$MODE" == "--dry-run" ]]; then
+    print_dry_run_commands
+  else
+    step "$(msg mode_check)"
+    echo "$(msg none_applied)"
+    echo "$(msg apply_hint)"
+  fi
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
