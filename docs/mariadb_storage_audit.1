@@ -1,0 +1,98 @@
+.TH MARIADB_STORAGE_AUDIT 1 2026-03-14 "PMA Control" "User Commands"
+.SH NAME
+mariadb_storage_audit \- Linux system audit and tuning around MariaDB/MySQL
+.SH SYNOPSIS
+.B mariadb_storage_audit.sh
+.RI [ --lang " fr|en|ru|zh "]
+.br
+.B mariadb_storage_audit.sh
+.BR --check " | " --dry-run " | " --apply
+.RI [ --lang " fr|en|ru|zh "]
+.br
+.B mariadb_storage_audit.sh
+.BR --help " | " --author " | " --authour " | " --license " | " --lisense " | " --version " | " --install-man
+.SH DESCRIPTION
+.B mariadb_storage_audit.sh
+audits Linux system settings around a MariaDB/MySQL server and can apply
+selected system-only tuning. It may read MariaDB information to improve
+diagnostics, but it does not modify MariaDB configuration.
+.SH OPTIONS
+.TP
+.B --check
+Read-only audit mode.
+.TP
+.B --dry-run
+Show the commands and file writes that would be executed by
+.BR --apply .
+.TP
+.B --apply
+Apply Linux system tuning and verify the resulting state.
+.TP
+.B --help
+Show detailed help.
+.TP
+.BR --author ", " --authour
+Show author information.
+.TP
+.BR --license ", " --lisense
+Show license information.
+.TP
+.B --version
+Show script version.
+.TP
+.B --install-man
+Install this manual page under
+.IR /usr/local/share/man/man1/ .
+.TP
+.BI --lang " fr|en|ru|zh"
+Force help language. Unknown values fall back to English.
+.SH FILES
+.TP
+.I /etc/sysctl.d/99-mariadb-tuning.conf
+Persistent sysctl settings written by
+.BR --apply .
+.TP
+.I /etc/systemd/system/disable-thp.service
+Persistent systemd service used to disable Transparent Huge Pages.
+.TP
+.I /etc/udev/rules.d/60-io-scheduler.rules
+Persistent block scheduler rule written by
+.BR --apply .
+.TP
+.I /etc/fstab
+Mount configuration checked and optionally updated by
+.BR --apply .
+.SH EXIT STATUS
+.TP
+.B 0
+Success.
+.TP
+.B 1
+Error or invalid option.
+.SH EXAMPLES
+.TP
+.B mariadb_storage_audit.sh --check
+Run the audit only.
+.TP
+.B mariadb_storage_audit.sh --dry-run
+Show the changes that would be applied.
+.TP
+.B mariadb_storage_audit.sh --install-man
+Install this man page, then use
+.BR man\ mariadb_storage_audit .
+.SH AUTHOR
+Aurélien LEQUOY
+.MT aurelien@pmacontrol.com
+.ME
+.br
+.UR http://www.pmacontrol.com
+http://www.pmacontrol.com
+.UE
+.SH LICENSE
+GPL-v3
+.SH SEE ALSO
+.BR man (1),
+.BR less (1),
+.BR systemctl (1),
+.BR sysctl (8),
+.BR findmnt (8)
