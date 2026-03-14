@@ -27,3 +27,9 @@ The script applies Linux system settings only. It may read MariaDB values for di
 ## License
 
 GPL-v3. See `LICENSE`.
+
+## Author
+
+Aurélien LEQUOY  
+<aurelien@pmacontrol.com>  
+http://www.pmacontrol.com
